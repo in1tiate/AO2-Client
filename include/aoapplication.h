@@ -123,6 +123,7 @@ public:
   QString get_default_theme_path(QString p_file);
   QString get_custom_theme_path(QString p_theme, QString p_file);
   QString get_character_path(QString p_char, QString p_file);
+  QString get_misc_path(QString p_misc, QString p_file);
   QString get_sounds_path(QString p_file);
   QString get_music_path(QString p_song);
   QString get_background_path(QString p_file);
@@ -274,8 +275,8 @@ public:
   // Returns the color with p_identifier from p_file
   QColor get_color(QString p_identifier, QString p_file);
 
-  // Returns the markdown symbol used for specified p_identifier such as colors
-  QString get_chat_markdown(QString p_identifier, QString p_file);
+  // Returns the markup symbol used for specified p_identifier such as colors
+  QString get_chat_markup(QString p_identifier, QString p_file);
 
   // Returns the color from the misc folder.
   QColor get_chat_color(QString p_identifier, QString p_chat);
@@ -401,6 +402,12 @@ public:
 
   // Returns p_char's gender
   QString get_gender(QString p_char);
+
+  // Returns the scaling type for p_char
+  Qt::TransformationMode get_char_scaling(QString p_char);
+
+  // Returns the scaling type for p_miscname
+  Qt::TransformationMode get_misc_scaling(QString p_miscname);
 
   // ======
   // These are all casing-related settings.
