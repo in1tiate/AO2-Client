@@ -11,7 +11,7 @@ Lobby::Lobby(AOApplication *p_ao_app) : QMainWindow()
 {
   ao_app = p_ao_app;
 
-  this->setWindowTitle(tr("Attorney Online 2"));
+  this->setWindowTitle(tr("Attorney Online 2 (Dreamy Theatre Beta)"));
   this->setWindowIcon(QIcon(":/logo.png"));
   this->setWindowFlags( (this->windowFlags() | Qt::CustomizeWindowHint) & ~Qt::WindowMaximizeButtonHint);
 
@@ -359,7 +359,7 @@ void Lobby::on_about_clicked()
   const bool hasApng = QImageReader::supportedImageFormats().contains("APNG");
 
   QString msg =
-      tr("<h2>Attorney Online %1</h2>"
+      tr("<h2>Attorney Online %1 (Dreamy Theatre Beta)</h2>"
          "The courtroom drama simulator"
          "<p><b>Source code:</b> "
          "<a href='https://github.com/AttorneyOnline/AO2-Client'>"

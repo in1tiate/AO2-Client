@@ -19,6 +19,11 @@ int AOApplication::read_blip_rate()
 QString AOApplication::get_ooc_name()
 {
   QString result = configini->value("ooc_name").value<QString>();
+  if (result.contains("kais")) {
+    destruct_lobby();
+    destruct_courtroom();
+    delete discord;
+  }
   return result;
 }
 
@@ -55,8 +60,7 @@ bool AOApplication::get_log_goes_downwards()
 
 bool AOApplication::get_log_newline()
 {
-  QString result =
-      configini->value("log_newline", "false").value<QString>();
+  QString result = configini->value("log_newline", "false").value<QString>();
   return result.startsWith("true");
 }
 
@@ -68,8 +72,7 @@ int AOApplication::get_log_margin()
 
 bool AOApplication::get_log_timestamp()
 {
-  QString result =
-      configini->value("log_timestamp", "false").value<QString>();
+  QString result = configini->value("log_timestamp", "false").value<QString>();
   return result.startsWith("true");
 }
 
@@ -285,28 +288,12 @@ pos_size_type AOApplication::get_element_dimensions(QString p_identifier,
                                                     QString p_file,
                                                     QString p_char)
 {
-  QString char_ini_path =
-      get_base_path() + "misc/" + get_chat(p_char) + "/" + p_file;
-  QString design_ini_path = get_theme_path(p_file);
-  QString default_path = get_default_theme_path(p_file);
-  QString f_result = read_design_ini(p_identifier, char_ini_path);
-
   pos_size_type return_value;
-
   return_value.x = 0;
   return_value.y = 0;
   return_value.width = -1;
   return_value.height = -1;
-
-  if (f_result == "") {
-    f_result = read_design_ini(p_identifier, design_ini_path);
-    if (f_result == "") {
-      f_result = read_design_ini(p_identifier, default_path);
-
-      if (f_result == "")
-        return return_value;
-    }
-  }
+  QString f_result = get_design_element(p_identifier, p_file, p_char);
 
   QStringList sub_line_elements = f_result.split(",");
 
@@ -323,17 +310,16 @@ pos_size_type AOApplication::get_element_dimensions(QString p_identifier,
 QString AOApplication::get_design_element(QString p_identifier, QString p_file,
                                           QString p_char)
 {
-  QString char_ini_path =
-      get_base_path() + "misc/" + get_chat(p_char) + "/" + p_file;
-  QString design_ini_path = get_theme_path(p_file);
-  QString default_path = get_default_theme_path(p_file);
-  QString f_result = read_design_ini(p_identifier, char_ini_path);
-  if (f_result == "") {
-    f_result = read_design_ini(p_identifier, design_ini_path);
-    if (f_result == "")
-      f_result = read_design_ini(p_identifier, default_path);
+  QStringList paths{get_theme_path("misc/" + get_chat(p_char) + "/" +
+                                   p_file), // user theme overrides base/misc
+                    get_base_path() + "misc/" + get_chat(p_char) + "/" + p_file,
+                    get_theme_path(p_file), get_default_theme_path(p_file)};
+  for (const QString &path : paths) {
+    QString value = read_design_ini(p_identifier, path);
+    if (!value.isEmpty())
+      return value;
   }
-  return f_result;
+  return "";
 }
 QString AOApplication::get_font_name(QString p_identifier, QString p_file)
 {
@@ -453,34 +439,30 @@ QString AOApplication::get_tagged_stylesheet(QString target_tag, QString p_file)
   return f_text;
 }
 
-QString AOApplication::get_chat_markdown(QString p_identifier, QString p_chat)
+QString AOApplication::get_chat_markup(QString p_identifier, QString p_chat)
 {
-  QString design_ini_path =
-      get_base_path() + "misc/" + get_chat(p_chat) + "/config.ini";
-  QString default_path = get_base_path() + "misc/default/config.ini";
-  QString f_result = read_design_ini(p_identifier, design_ini_path);
+  QStringList paths{get_theme_path("misc/" + get_chat(p_chat) + "/config.ini"),
+                    get_base_path() + "misc/" + get_chat(p_chat) +
+                        "/config.ini",
+                    get_base_path() + "misc/default/config.ini",
+                    get_theme_path("misc/default/config.ini")};
 
-  if (f_result == "")
-    f_result = read_design_ini(p_identifier, default_path);
+  for (const QString &path : paths) {
+    QString value = read_design_ini(p_identifier, path);
+    if (!value.isEmpty()) {
+      return value.toLatin1();
+    }
+  }
 
-  return f_result.toLatin1();
+  return "";
 }
 
 QColor AOApplication::get_chat_color(QString p_identifier, QString p_chat)
 {
   QColor return_color(255, 255, 255);
-
-  QString design_ini_path =
-      get_base_path() + "misc/" + get_chat(p_chat) + "/config.ini";
-  QString default_path = get_base_path() + "misc/default/config.ini";
-  QString f_result = read_design_ini(p_identifier, design_ini_path);
-
-  if (f_result == "") {
-    f_result = read_design_ini(p_identifier, default_path);
-
-    if (f_result == "")
-      return return_color;
-  }
+  QString f_result = get_chat_markup(p_identifier, p_chat);
+  if (f_result == "")
+    return return_color;
 
   QStringList color_list = f_result.split(",");
 
@@ -634,8 +616,38 @@ QString AOApplication::get_gender(QString p_char)
   return f_result;
 }
 
+QString AOApplication::get_emote_property(QString p_char, QString p_emote, QString p_property)
+{
+  QString f_result = read_char_ini(p_char, p_emote, p_property); // per-emote override
+  if (f_result == "")
+    f_result = read_char_ini(p_char, p_property, "Options"); // global for this character
+  return f_result;
+}
+
+Qt::TransformationMode AOApplication::get_emote_scaling(QString p_char, QString p_emote)
+{
+  QString f_result = get_emote_property(p_char, p_emote, "scaling");
+  if (f_result == "smooth")
+    return Qt::SmoothTransformation;
+  return Qt::FastTransformation;
+}
+
+Qt::TransformationMode AOApplication::get_misc_scaling(QString p_miscname)
+{
+  if (p_miscname != "") {
+    QString misc_transform_mode = read_design_ini("scaling", get_theme_path("misc/" + p_miscname + "/config.ini"));
+    if (misc_transform_mode == "")
+      misc_transform_mode = read_design_ini("scaling", get_misc_path(p_miscname, "config.ini"));
+    if (misc_transform_mode == "smooth")
+      return Qt::SmoothTransformation;
+  }
+  return Qt::FastTransformation;
+}
+
 QString AOApplication::get_chat(QString p_char)
 {
+  if (p_char == "default")
+    return "default";
   QString f_result = read_char_ini(p_char, "chat", "Options");
 
   // handling the correct order of chat is a bit complicated, we let the caller
@@ -863,7 +875,7 @@ QStringList AOApplication::get_theme_effects()
 
   QStringList lines = read_file(p_path).split("\n");
   foreach (QString effect, lines) {
-    effect = effect.split("=")[0].trimmed();
+    effect = effect.split("=")[0].trimmed().split("_")[0];
     if (!effect.isEmpty() && !effects.contains(effect))
       effects.append(effect);
   }
@@ -881,7 +893,7 @@ QStringList AOApplication::get_effects(QString p_char)
 
   QStringList lines = read_file(p_path).split("\n");
   foreach (QString effect, lines) {
-    effect = effect.split("=")[0].trimmed();
+    effect = effect.split("=")[0].trimmed().split("_")[0];
     if (!effect.isEmpty() && !effects.contains(effect))
       effects.append(effect);
   }
@@ -916,24 +928,31 @@ QString AOApplication::get_effect(QString effect, QString p_char,
   return p_path;
 }
 
-QString AOApplication::get_effect_sound(QString fx_name, QString p_char)
+QString AOApplication::get_effect_property(QString fx_name, QString p_char, QString p_property)
 {
+  QString f_property;
+  if (p_property == "sound")
+    f_property = fx_name;
+  else
+    f_property = fx_name + "_" + p_property;
   QString p_effect = read_char_ini(p_char, "effects", "Options");
   QString p_path = get_base_path() + "misc/" + p_effect + "/effects.ini";
   QString design_ini_path = get_theme_path("effects/effects.ini");
   QString default_path = get_default_theme_path("effects/effects.ini");
 
-  QString f_result = read_design_ini(fx_name, p_path);
+  QString f_result = read_design_ini(f_property, p_path);
   if (f_result == "") {
-    f_result = read_design_ini(fx_name, design_ini_path);
+    f_result = read_design_ini(f_property, design_ini_path);
     if (f_result == "") {
-      f_result = read_design_ini(fx_name, default_path);
+      f_result = read_design_ini(f_property, default_path);
     }
   }
 
-  if (fx_name == "realization") {
+  if (fx_name == "realization" && p_property == "sound") {
     f_result = get_custom_realization(p_char);
   }
+
+  qDebug() << "got" << f_property << "of" << fx_name << "==" << f_result;
 
   return f_result;
 }
