@@ -27,13 +27,18 @@ void AOSfxPlayer::loop_clear()
 void AOSfxPlayer::play(QString p_sfx, QString p_char, QString shout,
                        int channel)
 {
-  if (channel == -1) {
-    if (BASS_ChannelIsActive(m_stream_list[channel]) == BASS_ACTIVE_PLAYING)
-      m_channel = (m_channel + 1) % m_channelmax;
+  qDebug() << "playing sfx" << p_sfx << "on channel" << channel;
+  if (channel != -1) {
+    for (int i = 0; i < 6; ++i) {
+      if (BASS_ChannelIsActive(m_stream_list[i]) == BASS_ACTIVE_PLAYING) {
+          m_channel = (i + 1) % m_channelmax;
+          qDebug() << "channel" << i << "active, using channel" << m_channel;
+      }
+      else
+        break;
+    }
     channel = m_channel;
   }
-
-  BASS_ChannelStop(m_stream_list[channel]);
 
   QString misc_path = "";
   QString char_path = "";

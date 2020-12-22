@@ -1935,19 +1935,19 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
     case 1:
       filename = "holdit_bubble";
       objection_player->play("holdit", m_chatmessage[CHAR_NAME],
-                             ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]));
+                             ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
       break;
     case 2:
       filename = "objection_bubble";
       objection_player->play("objection", m_chatmessage[CHAR_NAME],
-                             ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]));
+                             ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
       if (ao_app->objection_stop_music())
         music_player->stop();
       break;
     case 3:
       filename = "takethat_bubble";
       objection_player->play("takethat", m_chatmessage[CHAR_NAME],
-                             ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]));
+                             ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
       break;
     // case 4 is AO2 only
     case 4:
@@ -1956,13 +1956,13 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
         objection_player->play(
             "custom_objections/" + custom_objection.split('.')[0],
             m_chatmessage[CHAR_NAME],
-            ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]));
+            ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
       }
       else {
         filename = "custom";
         objection_player->play(
             "custom", m_chatmessage[CHAR_NAME],
-            ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]));
+            ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
       }
       break;
       m_chatmessage[EMOTE_MOD] = 1;
@@ -2336,7 +2336,7 @@ void Courtroom::do_effect(QString fx_name, QString fx_sound, QString p_char,
     return;
 
   if (fx_sound != "")
-    sfx_player->play(fx_sound);
+    sfx_player->play(fx_sound, "","",0);
 
   // Only check if effects are disabled after playing the sound if it exists
   if (!ao_app->is_effects_enabled())
@@ -2359,7 +2359,7 @@ void Courtroom::do_effect(QString fx_name, QString fx_sound, QString p_char,
 
 void Courtroom::play_char_sfx(QString sfx_name)
 {
-  sfx_player->play(sfx_name);
+  sfx_player->play(sfx_name, "","",0);
   //  sfx_player->set_looping(false);
   //  if (ao_app->get_looping_sfx())
   //    sfx_player->set_looping(
@@ -2903,7 +2903,7 @@ void Courtroom::start_chat_ticking()
   }
   else if (m_chatmessage[REALIZATION] == "1") {
     this->do_flash();
-    sfx_player->play(ao_app->get_custom_realization(m_chatmessage[CHAR_NAME]));
+    sfx_player->play(ao_app->get_custom_realization(m_chatmessage[CHAR_NAME]), "","",0);
   }
   int emote_mod = m_chatmessage[EMOTE_MOD].toInt(); // text meme bonanza
   if ((emote_mod == 0 || emote_mod == 5) && m_chatmessage[SCREENSHAKE] == "1") {
@@ -3206,7 +3206,7 @@ void Courtroom::play_sfx()
   if (sfx_name == "1")
     return;
 
-  sfx_player->play(sfx_name);
+  sfx_player->play(sfx_name, "","",0);
   if (ao_app->get_looping_sfx())
     sfx_player->set_looping(
         ao_app->get_sfx_looping(current_char, current_emote) == "1");
@@ -3416,13 +3416,13 @@ void Courtroom::handle_wtce(QString p_wtce, int variant)
   ui_vp_wtce->set_max_duration(wtce_max_time);
   // witness testimony
   if (p_wtce == "testimony1") {
-    sfx_player->play(ao_app->get_sfx("witness_testimony"));
+    sfx_player->play(ao_app->get_sfx("witness_testimony"), "", "", 0);
     filename = "witnesstestimony";
     ui_vp_testimony->load_image("testimony", "");
   }
   // cross examination
   else if (p_wtce == "testimony2") {
-    sfx_player->play(ao_app->get_sfx("cross_examination"));
+    sfx_player->play(ao_app->get_sfx("cross_examination"), "", "", 0);
     filename = "crossexamination";
     ui_vp_testimony->stop();
   }
@@ -3430,12 +3430,12 @@ void Courtroom::handle_wtce(QString p_wtce, int variant)
     ui_vp_wtce->set_static_duration(verdict_static_time);
     ui_vp_wtce->set_max_duration(verdict_max_time);
     if (variant == 0) {
-      sfx_player->play(ao_app->get_sfx("not_guilty"));
+      sfx_player->play(ao_app->get_sfx("not_guilty"), "", "", 0);
       filename = "notguilty";
       ui_vp_testimony->stop();
     }
     else if (variant == 1) {
-      sfx_player->play(ao_app->get_sfx("guilty"));
+      sfx_player->play(ao_app->get_sfx("guilty"), "", "", 0);
       filename = "guilty";
       ui_vp_testimony->stop();
     }
