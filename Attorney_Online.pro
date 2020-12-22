@@ -15,11 +15,13 @@ HEADERS += $$files($$PWD/include/*.h)
 
 LIBS += -L$$PWD/lib
 
+QMAKE_LFLAGS_RPATH="-Wl,-rpath,$$PWD/lib"
+
 # Uncomment for verbose network logging
 # DEFINES += DEBUG_NETWORK
 
 # Uncomment to enable Discord Rich Presence
-# DEFINES += DISCORD
+DEFINES += DISCORD
 
 contains(DEFINES, DISCORD) {
   LIBS += -ldiscord-rpc

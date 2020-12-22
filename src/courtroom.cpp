@@ -3471,12 +3471,12 @@ void Courtroom::handle_wtce(QString p_wtce, int variant)
     ui_vp_wtce->set_static_duration(verdict_static_time);
     ui_vp_wtce->set_max_duration(verdict_max_time);
     if (variant == 0) {
-      sfx_player->play(ao_app->get_sfx("not_guilty");
+      sfx_player->play(ao_app->get_sfx("not_guilty"));
       filename = "notguilty";
       ui_vp_testimony->stop();
     }
     else if (variant == 1) {
-      sfx_player->play(ao_app->get_sfx("guilty");
+      sfx_player->play(ao_app->get_sfx("guilty"));
       filename = "guilty";
       ui_vp_testimony->stop();
     }
