@@ -3413,13 +3413,13 @@ void Courtroom::handle_wtce(QString p_wtce, int variant)
   ui_vp_wtce->set_max_duration(wtce_max_time);
   // witness testimony
   if (p_wtce == "testimony1") {
-    sfx_player->play(ao_app->get_sfx("witness_testimony"), "", "", 0);
+    sfx_player->play(ao_app->get_sfx("witness_testimony"));
     filename = "witnesstestimony";
     ui_vp_testimony->load_image("testimony", "");
   }
   // cross examination
   else if (p_wtce == "testimony2") {
-    sfx_player->play(ao_app->get_sfx("cross_examination"), "", "", 0);
+    sfx_player->play(ao_app->get_sfx("cross_examination"));
     filename = "crossexamination";
     ui_vp_testimony->stop();
   }
@@ -3427,12 +3427,12 @@ void Courtroom::handle_wtce(QString p_wtce, int variant)
     ui_vp_wtce->set_static_duration(verdict_static_time);
     ui_vp_wtce->set_max_duration(verdict_max_time);
     if (variant == 0) {
-      sfx_player->play(ao_app->get_sfx("not_guilty"), "", "", 0);
+      sfx_player->play(ao_app->get_sfx("not_guilty");
       filename = "notguilty";
       ui_vp_testimony->stop();
     }
     else if (variant == 1) {
-      sfx_player->play(ao_app->get_sfx("guilty"), "", "", 0);
+      sfx_player->play(ao_app->get_sfx("guilty");
       filename = "guilty";
       ui_vp_testimony->stop();
     }
