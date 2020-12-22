@@ -1323,10 +1323,16 @@ void Courtroom::update_character(int p_cid)
   if (ao_app->custom_objection_enabled) // if setting is enabled
   {
     custom_obj_menu->clear();
+    custom_objections_list.clear();
     if (file_exists(ao_app->get_image_suffix(
             ao_app->get_character_path(current_char, "custom")))) {
       ui_custom_objection->show();
-      QAction *action = custom_obj_menu->addAction("Default");
+      QString custom_name = ao_app->read_char_ini(f_char, "custom_name", "Shouts");
+      QAction *action;
+      if (custom_name != "")
+        action = custom_obj_menu->addAction(custom_name);
+      else
+        action = custom_obj_menu->addAction("Default");
       custom_obj_menu->setDefaultAction(action);
       objection_custom = "";
     }
@@ -1341,11 +1347,23 @@ void Courtroom::update_character(int p_cid)
                                                                  << "*.webp",
                                                    QDir::Files);
       for (const QString &filename : custom_obj) {
-        QAction *action = custom_obj_menu->addAction(filename);
+        CustomObjection custom_objection;
+        custom_objection.filename = filename;
+        QString custom_name = ao_app->read_char_ini(f_char, filename.split(".")[0] + "_name", "Shouts");
+        QAction *action;
+        if (custom_name != "") {
+          custom_objection.name = custom_name;
+          action = custom_obj_menu->addAction(custom_name);
+        }
+        else {
+          custom_objection.name = filename.split(".")[0];
+          action = custom_obj_menu->addAction(filename.split(".")[0]);
+        }
         if (custom_obj_menu->defaultAction() == nullptr) {
           custom_obj_menu->setDefaultAction(action);
-          objection_custom = action->text();
+          objection_custom = custom_objection.filename;
         }
+      custom_objections_list.append(custom_objection);
       }
     }
   }
@@ -1906,14 +1924,6 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
     m_chatmessage[MESSAGE] = ""; // Turn it into true blankpost
   }
 
-  if (!m_chatmessage[MESSAGE].isEmpty() || ic_chatlog_history.isEmpty() ||
-      ic_chatlog_history.last().get_message() != "") {
-    log_ic_text(f_charname, f_displayname, m_chatmessage[MESSAGE], "",
-                m_chatmessage[TEXT_COLOR].toInt());
-    append_ic_text(m_chatmessage[MESSAGE], f_displayname, "",
-                   m_chatmessage[TEXT_COLOR].toInt());
-  }
-
   if (is_ao2_bg) {
     set_size_and_pos(ui_vp_chatbox, "ao2_chatbox", m_chatmessage[CHAR_NAME]);
   }
@@ -1925,22 +1935,30 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
   ui_vp_message->move(ui_vp_message->x() + ui_vp_chatbox->x(),
                       ui_vp_message->y() + ui_vp_chatbox->y());
   ui_vp_message->setTextInteractionFlags(Qt::NoTextInteraction);
+  
+  QString f_char = m_chatmessage[CHAR_NAME];
+  QString f_custom_theme = ao_app->get_char_shouts(f_char);
 
   // if an objection is used
   if (objection_mod <= 4 && objection_mod >= 1) {
+    QString shout_message;
+    QString filename;
     ui_vp_objection->set_static_duration(shout_static_time);
     ui_vp_objection->set_max_duration(shout_max_time);
-    QString filename;
     switch (objection_mod) {
     case 1:
       filename = "holdit_bubble";
-      objection_player->play("holdit", m_chatmessage[CHAR_NAME],
-                             ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
+      objection_player->play("holdit", f_char, f_custom_theme);
+      shout_message = ao_app->read_char_ini(f_char, "holdit_message", "Shouts");
+      if (shout_message == "")
+        shout_message = tr("HOLD IT!");
       break;
     case 2:
       filename = "objection_bubble";
-      objection_player->play("objection", m_chatmessage[CHAR_NAME],
-                             ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
+      objection_player->play("objection", f_char, f_custom_theme);
+      shout_message = ao_app->read_char_ini(f_char, "objection_message", "Shouts");
+      if (shout_message == "")
+        shout_message = tr("OBJECTION!");
       if (ao_app->objection_stop_music())
         music_player->stop();
       break;
@@ -1948,25 +1966,34 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
       filename = "takethat_bubble";
       objection_player->play("takethat", m_chatmessage[CHAR_NAME],
                              ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
+      shout_message = ao_app->read_char_ini(f_char, "takethat_message", "Shouts");
+      if (shout_message == "")
+        shout_message = tr("TAKE THAT!");
       break;
     // case 4 is AO2 only
     case 4:
       if (custom_objection != "") {
         filename = "custom_objections/" + custom_objection;
-        objection_player->play(
-            "custom_objections/" + custom_objection.split('.')[0],
-            m_chatmessage[CHAR_NAME],
-            ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
+        objection_player->play("custom_objections/" +
+                                   custom_objection.split('.')[0],
+                               f_char, f_custom_theme);
+        shout_message = ao_app->read_char_ini(f_char, custom_objection.split('.')[0] + "_message", "Shouts");
+        if (shout_message == "")
+          shout_message = custom_objection.split('.')[0];
       }
       else {
         filename = "custom";
-        objection_player->play(
-            "custom", m_chatmessage[CHAR_NAME],
-            ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]), 0);
+        objection_player->play("custom", f_char, f_custom_theme);
+        shout_message = ao_app->read_char_ini(f_char, "custom_message", "Shouts");
+        if (shout_message == "")
+          shout_message = tr("CUSTOM!");
       }
       break;
       m_chatmessage[EMOTE_MOD] = 1;
     }
+    log_ic_text(f_char, f_displayname, shout_message,
+                  tr("shouts"),2);
+    append_ic_text(shout_message, f_displayname, tr("shouts"));
     ui_vp_objection->load_image(
         filename, m_chatmessage[CHAR_NAME],
         ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]));
@@ -1974,6 +2001,14 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
   }
   else
     handle_chatmessage_2();
+
+ if (!m_chatmessage[MESSAGE].isEmpty() || ic_chatlog_history.isEmpty() ||
+      ic_chatlog_history.last().get_message() != "") {
+    log_ic_text(f_charname, f_displayname, m_chatmessage[MESSAGE], "",
+                m_chatmessage[TEXT_COLOR].toInt());
+    append_ic_text(m_chatmessage[MESSAGE], f_displayname, "",
+                   m_chatmessage[TEXT_COLOR].toInt());
+  }
 }
 
 void Courtroom::objection_done() { handle_chatmessage_2(); }
@@ -2391,11 +2426,12 @@ void Courtroom::handle_chatmessage_3()
                           f_side == "jud" || f_side == "jur");
     ui_vp_evidence_display->show_evidence(f_image, is_left_side,
                                           ui_sfx_slider->value());
-
-    log_ic_text(m_chatmessage[CHAR_NAME], m_chatmessage[SHOWNAME], f_evi_name,
-                tr("has presented evidence"),
-                m_chatmessage[TEXT_COLOR].toInt());
-    append_ic_text(f_evi_name, f_showname, tr("has presented evidence"));
+    if (log_ic_actions) {
+      log_ic_text(m_chatmessage[CHAR_NAME], m_chatmessage[SHOWNAME], f_evi_name,
+                  tr("has presented evidence"),
+                  m_chatmessage[TEXT_COLOR].toInt());
+      append_ic_text(f_evi_name, f_showname, tr("has presented evidence"));
+    }
     evidence_presented = true; // we're done presenting evidence, and we
                                // don't want to do it twice
   }
@@ -2752,8 +2788,16 @@ void Courtroom::append_ic_text(QString p_text, QString p_name, QString p_action,
   if (p_action == tr("has stopped the music")) {
     ui_ic_chatlog->textCursor().insertText(" " + p_action + ".", normal);
   }
+  // Make shout text bold
+  else if (p_action == tr("shouts") && log_ic_actions) {
+    ui_ic_chatlog->textCursor().insertText(" " + p_action + " ", normal);
+    if (log_colors)
+      ui_ic_chatlog->textCursor().insertHtml("<b>" + filter_ic_text(p_text, true, -1, 0) + "</b>");
+    else
+      ui_ic_chatlog->textCursor().insertText(" " + p_text, italics);
+  }
   // If action not blank:
-  else if (p_action != "") {
+  else if (p_action != "" && log_ic_actions) {
     // Format the action in normal
     ui_ic_chatlog->textCursor().insertText(" " + p_action, normal);
     if (log_newline)
@@ -4530,10 +4574,16 @@ void Courtroom::show_custom_objection_menu(const QPoint &pos)
     ui_take_that->set_image("takethat");
     ui_hold_it->set_image("holdit");
     ui_custom_objection->set_image("custom_selected");
-    if (selecteditem->text() == "Default")
+    if (selecteditem->text() == ao_app->read_char_ini(current_char, "custom_name", "Shouts") || selecteditem->text() == "Default")
       objection_custom = "";
-    else
-      objection_custom = selecteditem->text();
+    else {
+      foreach (CustomObjection custom_objection, custom_objections_list) {
+        if (custom_objection.name == selecteditem->text()) {
+          objection_custom = custom_objection.filename;
+          break;
+        }
+      }
+    }
     objection_state = 4;
     custom_obj_menu->setDefaultAction(selecteditem);
   }
