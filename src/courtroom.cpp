@@ -1992,8 +1992,8 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
       m_chatmessage[EMOTE_MOD] = 1;
     }
     log_ic_text(f_char, f_displayname, shout_message,
-                  tr("shouts"),2);
-    append_ic_text(shout_message, f_displayname, tr("shouts"));
+                  tr("shouts"),m_chatmessage[TEXT_COLOR].toInt());
+    append_ic_text(shout_message, f_displayname, tr("shouts"), m_chatmessage[TEXT_COLOR].toInt());
     ui_vp_objection->load_image(
         filename, m_chatmessage[CHAR_NAME],
         ao_app->get_char_shouts(m_chatmessage[CHAR_NAME]));
@@ -2497,6 +2497,7 @@ QString Courtroom::filter_ic_text(QString p_text, bool html, int target_pos,
                                   int default_color)
 {
   QString p_text_escaped;
+  qDebug() << p_text;
 
   int check_pos = 0;
   int check_pos_escaped = 0;
@@ -2791,10 +2792,16 @@ void Courtroom::append_ic_text(QString p_text, QString p_name, QString p_action,
   // Make shout text bold
   else if (p_action == tr("shouts") && log_ic_actions) {
     ui_ic_chatlog->textCursor().insertText(" " + p_action + " ", normal);
-    if (log_colors)
-      ui_ic_chatlog->textCursor().insertHtml("<b>" + filter_ic_text(p_text, true, -1, 0) + "</b>");
+    if (log_colors) {
+      QString p_text_filtered = filter_ic_text(p_text, true, -1, color);
+      p_text_filtered = p_text_filtered.replace("$c0", ao_app->get_color("ic_chatlog_color", "courtroom_fonts.ini").name(QColor::HexRgb));
+      for (int c = 1; c < max_colors; ++c) {
+        p_text_filtered = p_text_filtered.replace("$c" + QString::number(c), default_color_rgb_list.at(c).name(QColor::HexRgb));
+      }
+      ui_ic_chatlog->textCursor().insertHtml("<b>" + p_text_filtered + "</b>");
+    }
     else
-      ui_ic_chatlog->textCursor().insertText(" " + p_text, italics);
+      ui_ic_chatlog->textCursor().insertText(p_text, bold);
   }
   // If action not blank:
   else if (p_action != "" && log_ic_actions) {
