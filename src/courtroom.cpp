@@ -1932,7 +1932,6 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
                       ui_vp_message->y() + ui_vp_chatbox->y());
   ui_vp_message->setTextInteractionFlags(Qt::NoTextInteraction);
   
-  QString f_char = m_chatmessage[CHAR_NAME];
   QString f_custom_theme = ao_app->get_char_shouts(f_char);
 
   // if an objection is used
@@ -2000,7 +1999,7 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
 
  if (!m_chatmessage[MESSAGE].isEmpty() || ic_chatlog_history.isEmpty() ||
       ic_chatlog_history.last().get_message() != "") {
-    log_ic_text(f_charname, f_displayname, m_chatmessage[MESSAGE], "",
+    log_ic_text(f_char_name, f_displayname, m_chatmessage[MESSAGE], "",
                 m_chatmessage[TEXT_COLOR].toInt());
     append_ic_text(m_chatmessage[MESSAGE], f_displayname, "",
                    m_chatmessage[TEXT_COLOR].toInt());
@@ -2504,7 +2503,6 @@ QString Courtroom::filter_ic_text(QString p_text, bool html, int target_pos,
                                   int default_color)
 {
   QString p_text_escaped;
-  qDebug() << p_text;
 
   int check_pos = 0;
   int check_pos_escaped = 0;
