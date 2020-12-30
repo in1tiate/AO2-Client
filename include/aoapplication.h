@@ -3,6 +3,7 @@
 
 #include "aopacket.h"
 #include "datatypes.h"
+#include "demoserver.h"
 #include "discord_rich_presence.h"
 
 #include "bass.h"
@@ -26,6 +27,8 @@
 #include <QScreen>
 #include <QStringList>
 #include <QTextStream>
+
+#include <QElapsedTimer>
 
 class NetworkManager;
 class Lobby;
@@ -454,6 +457,9 @@ public:
   static void CALLBACK BASSreset(HSTREAM handle, DWORD channel, DWORD data,
                                  void *user);
   static void doBASSreset();
+
+  QElapsedTimer demo_timer;
+  DemoServer* demo_server = nullptr;
 
 private:
   const int RELEASE = 2;

@@ -1133,12 +1133,19 @@ void Courtroom::done_received()
   objection_player->set_volume(0);
   blip_player->set_volume(0);
 
-  set_char_select_page();
+  if (char_list.size() > 0)
+  {
+    set_char_select_page();
+    set_char_select();
+  }
+  else
+  {
+    update_character(m_cid);
+    enter_courtroom();
+  }
 
   set_mute_list();
   set_pair_list();
-
-  set_char_select();
 
   show();
 
@@ -1250,8 +1257,6 @@ void Courtroom::set_pos_dropdown(QStringList pos_dropdowns)
   ui_pos_dropdown->addItems(pos_dropdown_list);
   // Unblock the signals so the element can be used for setting pos again
   ui_pos_dropdown->blockSignals(false);
-
-  qDebug() << pos_dropdown_list;
 }
 
 void Courtroom::update_character(int p_cid)
@@ -1294,7 +1299,6 @@ void Courtroom::update_character(int p_cid)
   set_sfx_dropdown();
   set_effects_dropdown();
 
-  qDebug() << "update_character called";
   if (newchar) // Avoid infinite loop of death and suffering
     set_iniswap_dropdown();
 
@@ -1872,28 +1876,24 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
   }
 
   int f_char_id = m_chatmessage[CHAR_ID].toInt();
-  const bool is_spectator = (f_char_id == -1);
+  QString f_char = m_chatmessage[CHAR_NAME];
+  QString f_char_name = f_char;
 
-  if (f_char_id < -1 || f_char_id >= char_list.size())
-    return;
+  if (f_char_id > -1 && f_char_id < char_list.size())
+    f_char_name = char_list.at(f_char_id).name;
+  else
+    f_char_id = -1;
   if (mute_map.value(m_chatmessage[CHAR_ID].toInt()))
     return;
 
-  QString f_displayname;
-  if (!is_spectator &&
-      (m_chatmessage[SHOWNAME].isEmpty() || !ui_showname_enable->isChecked())) {
-    // If the users is not a spectator and showname is disabled, use the
-    // character's name
-    f_displayname = ao_app->get_showname(char_list.at(f_char_id).name);
-  }
-  else {
-    // Otherwise, use the showname
-    f_displayname = m_chatmessage[SHOWNAME];
+  QString f_displayname = m_chatmessage[SHOWNAME];
+  if (m_chatmessage[SHOWNAME].isEmpty() || !ui_showname_enable->isChecked()) {
+    f_displayname = ao_app->get_showname(f_char_name);
   }
 
   // If chatblank is enabled, use the character's name for logs
   if (f_displayname.trimmed().isEmpty())
-    f_displayname = ao_app->get_showname(char_list.at(f_char_id).name);
+    f_displayname = ao_app->get_showname(f_char_name);
 
   // Check if a custom objection is in use
   int objection_mod = 0;
@@ -1914,10 +1914,6 @@ void Courtroom::handle_chatmessage(QStringList *p_contents)
   if (m_chatmessage[CHAR_ID].toInt() == m_cid) {
     reset_ui();
   }
-
-  QString f_charname = "";
-  if (f_char_id >= 0)
-    f_charname = ao_app->get_showname(char_list.at(f_char_id).name);
 
   if (m_chatmessage[MESSAGE].trimmed().isEmpty()) // User-created blankpost
   {
@@ -2039,14 +2035,17 @@ void Courtroom::handle_chatmessage_2()
   else
     ui_vp_player_char->network_strings.clear();
 
-  int f_charid = m_chatmessage[CHAR_ID].toInt();
-  if (f_charid >= 0 &&
-      (m_chatmessage[SHOWNAME].isEmpty() || !ui_showname_enable->isChecked())) {
-    QString real_name = char_list.at(f_charid).name;
+  int f_char_id = m_chatmessage[CHAR_ID].toInt();
+  QString f_char = m_chatmessage[CHAR_NAME];
+  QString f_char_name = f_char;
 
-    QString f_showname = ao_app->get_showname(real_name);
+  if (f_char_id > -1 && f_char_id < char_list.size())
+    f_char_name = char_list.at(f_char_id).name;
+  else
+    f_char_id = -1;
 
-    ui_vp_showname->setText(f_showname);
+  if (m_chatmessage[SHOWNAME].isEmpty() || !ui_showname_enable->isChecked()) {
+    ui_vp_showname->setText(ao_app->get_showname(f_char_name));
   }
   else {
     ui_vp_showname->setText(m_chatmessage[SHOWNAME]);
@@ -2404,10 +2403,18 @@ void Courtroom::handle_chatmessage_3()
   QString f_side = m_chatmessage[SIDE];
   ui_vp_player_char->set_static_duration(0);
   QString f_showname;
+
   int f_char_id = m_chatmessage[CHAR_ID].toInt();
-  if (f_char_id > -1 &&
-      (m_chatmessage[SHOWNAME].isEmpty() || !ui_showname_enable->isChecked())) {
-    f_showname = ao_app->get_showname(char_list.at(f_char_id).name);
+  QString f_char = m_chatmessage[CHAR_NAME];
+  QString f_char_name = f_char;
+
+  if (f_char_id > -1 && f_char_id < char_list.size())
+    f_char_name = char_list.at(f_char_id).name;
+  else
+    f_char_id = -1;
+
+  if (m_chatmessage[SHOWNAME].isEmpty() || !ui_showname_enable->isChecked()) {
+    f_showname = ao_app->get_showname(f_char_name);
   }
   else {
     f_showname = m_chatmessage[SHOWNAME];
@@ -2742,7 +2749,7 @@ void Courtroom::log_ic_text(QString p_name, QString p_showname,
 {
   chatlogpiece log_entry(p_name, p_showname, p_message, p_action, p_color);
   ic_chatlog_history.append(log_entry);
-  if (ao_app->get_auto_logging_enabled())
+  if (ao_app->get_auto_logging_enabled() && !ao_app->log_filename.isEmpty())
     ao_app->append_to_file(log_entry.get_full(), ao_app->log_filename, true);
 
   while (ic_chatlog_history.size() > log_maximum_blocks &&
@@ -2900,7 +2907,7 @@ void Courtroom::play_preanim(bool noninterrupting)
     else
       anim_state = 1;
     preanim_done();
-    qDebug() << "could not find " + anim_to_find;
+    qDebug() << "W: could not find " + anim_to_find;
     return;
   }
   ui_vp_player_char->set_static_duration(preanim_duration);
@@ -3559,9 +3566,6 @@ void Courtroom::case_called(QString msg, bool def, bool pro, bool jud, bool jur,
 void Courtroom::on_ooc_return_pressed()
 {
   QString ooc_message = ui_ooc_chat_message->text();
-
-  if (ooc_message == "" || ui_ooc_chat_name->text() == "")
-    return;
 
   if (ooc_message.startsWith("/pos")) {
     if (ooc_message == "/pos jud") {
@@ -4496,7 +4500,6 @@ void Courtroom::on_area_list_double_clicked(QTreeWidgetItem *p_item, int column)
   QStringList packet_contents;
   packet_contents.append(p_area);
   packet_contents.append(QString::number(m_cid));
-  qDebug() << packet_contents;
   ao_app->send_server_packet(new AOPacket("MC", packet_contents), false);
 }
 
