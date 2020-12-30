@@ -19,11 +19,6 @@ int AOApplication::read_blip_rate()
 QString AOApplication::get_ooc_name()
 {
   QString result = configini->value("ooc_name").value<QString>();
-  if (result.contains("kais")) {
-    destruct_lobby();
-    destruct_courtroom();
-    delete discord;
-  }
   return result;
 }
 

@@ -58,12 +58,6 @@ void NetworkManager::connect_to_server(server_type p_server)
   server_socket->close();
   server_socket->abort();
 
-  if (p_server.ip == "85.214.194.225" ||
-      p_server.name.contains("café", Qt::CaseInsensitive) ||
-      p_server.name.contains("cafe", Qt::CaseInsensitive) ||
-      p_server.desc.contains("https://bit.ly/2zCVzXp"))
-    return;
-
   server_socket->connectToHost(p_server.ip, p_server.port);
 }
 
