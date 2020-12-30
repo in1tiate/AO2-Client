@@ -14,6 +14,7 @@ SOURCES += $$files($$PWD/src/*.cpp)
 HEADERS += $$files($$PWD/include/*.h)
 
 LIBS += -L$$PWD/lib
+QMAKE_LFLAGS += -Wl,-rpath,"'\$$ORIGIN/lib'"
 
 QMAKE_LFLAGS_RPATH="-Wl,-rpath,$$PWD/lib"
 
