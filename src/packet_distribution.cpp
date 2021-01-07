@@ -164,6 +164,15 @@ void AOApplication::server_packet_received(AOPacket *p_packet)
       else
         w_courtroom->append_server_chatmessage(f_contents.at(0),
                                                f_contents.at(1), "0");
+      if (get_auto_logging_enabled() && !log_filename.isEmpty())
+      {
+        QString path = log_filename.left(log_filename.size()).replace(".log", ".demo");
+        append_to_file(p_packet->to_string(), path, true);
+        if (!demo_timer.isValid())
+          demo_timer.start();
+        else
+          append_to_file("wait#"+ QString::number(demo_timer.restart()) + "#%", path, true);
+      }
     }
   }
   else if (header == "FL") {
@@ -229,7 +238,7 @@ void AOApplication::server_packet_received(AOPacket *p_packet)
     evidence_list_size = f_contents.at(1).toInt();
     music_list_size = f_contents.at(2).toInt();
 
-    if (char_list_size < 1 || evidence_list_size < 0 || music_list_size < 0)
+    if (char_list_size < 0 || evidence_list_size < 0 || music_list_size < 0)
       goto end;
 
     loaded_chars = 0;
@@ -309,7 +318,7 @@ void AOApplication::server_packet_received(AOPacket *p_packet)
   }
 
   else if (header == "SC") {
-    if (!courtroom_constructed)
+    if (!courtroom_constructed || courtroom_loaded)
       goto end;
 
     for (int n_element = 0; n_element < f_contents.size(); ++n_element) {
@@ -341,9 +350,18 @@ void AOApplication::server_packet_received(AOPacket *p_packet)
     }
 
     send_server_packet(new AOPacket("RM#%"));
+    if (get_auto_logging_enabled() && !log_filename.isEmpty())
+    {
+      QString path = log_filename.left(log_filename.size()).replace(".log", ".demo");
+      append_to_file(p_packet->to_string(), path, true);
+      if (!demo_timer.isValid())
+        demo_timer.start();
+      else
+        append_to_file("wait#"+ QString::number(demo_timer.restart()) + "#%", path, true);
+    }
   }
   else if (header == "SM") {
-    if (!courtroom_constructed)
+    if (!courtroom_constructed || courtroom_loaded)
       goto end;
 
     bool musics_time = false;
@@ -440,6 +458,15 @@ void AOApplication::server_packet_received(AOPacket *p_packet)
           2) // We have a pos included in the background packet!
         w_courtroom->set_side(f_contents.at(1));
       w_courtroom->set_background(f_contents.at(0), f_contents.size() >= 2);
+      if (get_auto_logging_enabled() && !log_filename.isEmpty())
+      {
+        QString path = log_filename.left(log_filename.size()).replace(".log", ".demo");
+        append_to_file(p_packet->to_string(), path, true);
+        if (!demo_timer.isValid())
+          demo_timer.start();
+        else
+          append_to_file("wait#"+ QString::number(demo_timer.restart()) + "#%", path, true);
+      }
     }
   }
   else if (header == "SP") {
@@ -449,6 +476,15 @@ void AOApplication::server_packet_received(AOPacket *p_packet)
     if (courtroom_constructed) // We were sent a "set position" packet
     {
       w_courtroom->set_side(f_contents.at(0));
+      if (get_auto_logging_enabled() && !log_filename.isEmpty())
+      {
+        QString path = log_filename.left(log_filename.size()).replace(".log", ".demo");
+        append_to_file(p_packet->to_string(), path, true);
+        if (!demo_timer.isValid())
+          demo_timer.start();
+        else
+          append_to_file("wait#"+ QString::number(demo_timer.restart()) + "#%", path, true);
+      }
     }
   }
   else if (header == "SD") // Send pos dropdown
@@ -470,27 +506,69 @@ void AOApplication::server_packet_received(AOPacket *p_packet)
   }
   else if (header == "MS") {
     if (courtroom_constructed && courtroom_loaded)
+    {
       w_courtroom->handle_chatmessage(&p_packet->get_contents());
+      if (get_auto_logging_enabled() && !log_filename.isEmpty())
+      {
+        QString path = log_filename.left(log_filename.size()).replace(".log", ".demo");
+        append_to_file(p_packet->to_string(), path, true);
+        if (!demo_timer.isValid())
+          demo_timer.start();
+        else
+          append_to_file("wait#"+ QString::number(demo_timer.restart()) + "#%", path, true);
+      }
+    }
   }
   else if (header == "MC") {
     if (courtroom_constructed && courtroom_loaded)
+    {
       w_courtroom->handle_song(&p_packet->get_contents());
+      if (get_auto_logging_enabled() && !log_filename.isEmpty())
+      {
+        QString path = log_filename.left(log_filename.size()).replace(".log", ".demo");
+        append_to_file(p_packet->to_string(), path, true);
+        if (!demo_timer.isValid())
+          demo_timer.start();
+        else
+          append_to_file("wait#"+ QString::number(demo_timer.restart()) + "#%", path, true);
+      }
+    }
   }
   else if (header == "RT") {
     if (f_contents.size() < 1)
       goto end;
     if (courtroom_constructed) {
-      if (f_contents.size() == 1)
-        w_courtroom->handle_wtce(f_contents.at(0), 0);
-      else if (f_contents.size() == 2) {
-        w_courtroom->handle_wtce(f_contents.at(0), f_contents.at(1).toInt());
+        if (f_contents.size() == 1)
+          w_courtroom->handle_wtce(f_contents.at(0), 0);
+        else if (f_contents.size() == 2) {
+          w_courtroom->handle_wtce(f_contents.at(0), f_contents.at(1).toInt());
+        if (get_auto_logging_enabled() && !log_filename.isEmpty())
+        {
+          QString path = log_filename.left(log_filename.size()).replace(".log", ".demo");
+          append_to_file(p_packet->to_string(), path, true);
+          if (!demo_timer.isValid())
+            demo_timer.start();
+          else
+            append_to_file("wait#"+ QString::number(demo_timer.restart()) + "#%", path, true);
+        }
       }
     }
   }
   else if (header == "HP") {
     if (courtroom_constructed && f_contents.size() > 1)
+    {
       w_courtroom->set_hp_bar(f_contents.at(0).toInt(),
                               f_contents.at(1).toInt());
+      if (get_auto_logging_enabled() && !log_filename.isEmpty())
+      {
+        QString path = log_filename.left(log_filename.size()).replace(".log", ".demo");
+        append_to_file(p_packet->to_string(), path, true);
+        if (!demo_timer.isValid())
+          demo_timer.start();
+        else
+          append_to_file("wait#"+ QString::number(demo_timer.restart()) + "#%", path, true);
+      }
+    }
   }
   else if (header == "LE") {
     if (courtroom_constructed) {

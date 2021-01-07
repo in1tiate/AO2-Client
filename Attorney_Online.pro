@@ -20,7 +20,7 @@ QMAKE_LFLAGS += -Wl,-rpath,"'\$$ORIGIN/lib'"
 # DEFINES += DEBUG_NETWORK
 
 # Uncomment to enable Discord Rich Presence
-# DEFINES += DISCORD
+DEFINES += DISCORD
 
 contains(DEFINES, DISCORD) {
   LIBS += -ldiscord-rpc
@@ -47,7 +47,7 @@ TRANSLATIONS = resource/translations/ao_en.ts \
                resource/translations/ao_pt.ts \
                resource/translations/ao_pl.ts
 
-win32:RC_ICONS = resource/logo_ao2.ico
+win32:RC_ICONS = resource/logo_dt.ico
 macx:ICON = resource/logo_ao2.icns
 
 android:DISTFILES += \
