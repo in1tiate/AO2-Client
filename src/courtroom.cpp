@@ -72,9 +72,13 @@ Courtroom::Courtroom(AOApplication *p_ao_app) : QMainWindow()
   ui_vp_testimony->setAttribute(Qt::WA_TransparentForMouseEvents);
   ui_vp_wtce = new SplashLayer(this, ao_app);
   ui_vp_wtce->set_play_once(true);
+  ui_vp_wtce->continuous = false;
+  ui_vp_wtce->force_continuous = true;
   ui_vp_wtce->setAttribute(Qt::WA_TransparentForMouseEvents);
   ui_vp_objection = new SplashLayer(this, ao_app);
   ui_vp_objection->set_play_once(true);
+  ui_vp_objection->continuous = false;
+  ui_vp_objection->force_continuous = true;
   ui_vp_objection->setAttribute(Qt::WA_TransparentForMouseEvents);
 
   ui_ic_chatlog = new QTextEdit(this);
@@ -2598,18 +2602,16 @@ void Courtroom::initialize_chatbox()
 
     // This should probably be called only if any change from the last chat
     // arrow was actually detected.
-    if (current_misc != last_misc) {
-      pos_size_type design_ini_result = ao_app->get_element_dimensions(
-          "chat_arrow", "courtroom_design.ini", customchar);
-      if (design_ini_result.width < 0 || design_ini_result.height < 0) {
-        qDebug() << "W: could not find \"chat_arrow\" in courtroom_design.ini";
-        ui_vp_chat_arrow->hide();
-      }
-      else {
-        ui_vp_chat_arrow->move(design_ini_result.x + ui_vp_chatbox->x(), design_ini_result.y + ui_vp_chatbox->y());
-        ui_vp_chat_arrow->combo_resize(design_ini_result.width,
-                                       design_ini_result.height);
-      }
+    pos_size_type design_ini_result = ao_app->get_element_dimensions(
+        "chat_arrow", "courtroom_design.ini", customchar);
+    if (design_ini_result.width < 0 || design_ini_result.height < 0) {
+      qDebug() << "W: could not find \"chat_arrow\" in courtroom_design.ini";
+      ui_vp_chat_arrow->hide();
+    }
+    else {
+      ui_vp_chat_arrow->move(design_ini_result.x + ui_vp_chatbox->x(), design_ini_result.y + ui_vp_chatbox->y());
+      ui_vp_chat_arrow->combo_resize(design_ini_result.width,
+                                      design_ini_result.height);
     }
 
     pos_size_type default_width = ao_app->get_element_dimensions(
@@ -3312,12 +3314,13 @@ void Courtroom::chat_tick()
       f_custom_theme = ao_app->get_chat(f_char);
     }
     ui_vp_chat_arrow->transform_mode = ao_app->get_misc_scaling(f_custom_theme);
-    ui_vp_chat_arrow->load_image("chat_arrow",f_custom_theme); // Chat stopped being processed, indicate that.
+    ui_vp_chat_arrow->load_image("chat_arrow", f_custom_theme); // Chat stopped being processed, indicate that.
     additive_previous =
         additive_previous +
         filter_ic_text(f_message, true, -1, m_chatmessage[TEXT_COLOR].toInt());
 	  QString f_message_filtered = filter_ic_text(f_message, true, -1, m_chatmessage[TEXT_COLOR].toInt());
     for (int c = 0; c < max_colors; ++c) {
+      additive_previous = additive_previous.replace("$c" + QString::number(c), char_color_rgb_list.at(c).name(QColor::HexRgb));
       f_message_filtered = f_message_filtered.replace("$c" + QString::number(c), char_color_rgb_list.at(c).name(QColor::HexRgb));
     }
     additive_previous = additive_previous + f_message_filtered;
@@ -3452,6 +3455,7 @@ void Courtroom::chat_tick()
     // Do the colors, gradual showing, etc. in here
     QString f_message_filtered = filter_ic_text(f_message, true, tick_pos, m_chatmessage[TEXT_COLOR].toInt());
     for (int c = 0; c < max_colors; ++c) {
+      additive_previous = additive_previous.replace("$c" + QString::number(c), char_color_rgb_list.at(c).name(QColor::HexRgb));
       f_message_filtered = f_message_filtered.replace("$c" + QString::number(c), char_color_rgb_list.at(c).name(QColor::HexRgb));
     }
     ui_vp_message->setHtml(additive_previous + f_message_filtered);
