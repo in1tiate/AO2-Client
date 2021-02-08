@@ -165,7 +165,7 @@ public:
   void set_background(QString p_background, bool display = false);
 
   // sets the local character pos/side to use.
-  void set_side(QString p_side);
+  void set_side(QString p_side, bool block_signals=true);
 
   // sets the pos dropdown
   void set_pos_dropdown(QStringList pos_dropdowns);
@@ -336,7 +336,8 @@ private:
   bool message_is_centered = false;
 
   int current_display_speed = 3;
-  int message_display_speed[7] = {5, 10, 25, 40, 50, 70, 90};
+  int text_crawl = 40;
+  double message_display_mult[7] = {0.125, 0.25, 0.65, 1, 1.25, 1.75, 2.25};
 
   // The character ID of the character this user wants to appear alongside with.
   int other_charid = -1;
@@ -604,7 +605,7 @@ private:
 
   QWidget *ui_viewport;
   BackgroundLayer *ui_vp_background;
-  ForegroundLayer *ui_vp_speedlines;
+  SplashLayer *ui_vp_speedlines;
   CharLayer *ui_vp_player_char;
   CharLayer *ui_vp_sideplayer_char;
   BackgroundLayer *ui_vp_desk;
@@ -613,10 +614,10 @@ private:
   QLabel *ui_vp_showname;
   InterfaceLayer *ui_vp_chat_arrow;
   QTextEdit *ui_vp_message;
-  InterfaceLayer *ui_vp_testimony;
-  InterjectionLayer *ui_vp_wtce;
+  SplashLayer *ui_vp_testimony;
+  SplashLayer *ui_vp_wtce;
   EffectLayer *ui_vp_effect;
-  InterjectionLayer *ui_vp_objection;
+  SplashLayer *ui_vp_objection;
 
   QTextEdit *ui_ic_chatlog;
 
@@ -658,6 +659,7 @@ private:
 
   QComboBox *ui_emote_dropdown;
   QComboBox *ui_pos_dropdown;
+  AOButton *ui_pos_remove;
 
   QComboBox *ui_iniswap_dropdown;
   AOButton *ui_iniswap_remove;
@@ -835,6 +837,7 @@ private slots:
 
   void on_emote_dropdown_changed(int p_index);
   void on_pos_dropdown_changed(int p_index);
+  void on_pos_remove_clicked();
 
   void on_iniswap_dropdown_changed(int p_index);
   void set_iniswap_dropdown();
